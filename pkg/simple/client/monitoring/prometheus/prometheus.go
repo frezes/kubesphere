@@ -19,6 +19,8 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +31,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"kubesphere.io/kubesphere/pkg/simple/client/monitoring"
+	"kubesphere.io/kubesphere/pkg/utils/httputils"
 )
 
 const MeteringDefaultTimeout = 20 * time.Second
@@ -39,8 +42,22 @@ type prometheus struct {
 }
 
 func NewPrometheus(options *Options) (monitoring.Interface, error) {
+	defaultRoundTripper := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		IdleConnTimeout: 10 * time.Second,
+	}
+
+	transportConfig, err := httputils.CreateTransport(options.Auth, defaultRoundTripper, nil)
+	if err != nil {
+		return nil, err
+	}
 	cfg := api.Config{
-		Address: options.Endpoint,
+		Address:      options.Endpoint,
+		RoundTripper: transportConfig,
 	}
 
 	client, err := api.NewClient(cfg)

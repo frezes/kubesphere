@@ -18,10 +18,12 @@ package prometheus
 
 import (
 	"github.com/spf13/pflag"
+	"kubesphere.io/kubesphere/pkg/utils/httputils"
 )
 
 type Options struct {
-	Endpoint string `json:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Endpoint string          `json:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Auth     *httputils.Auth `json:"auth,omitempty" yaml:"auth,omitempty"`
 }
 
 func NewPrometheusOptions() *Options {
